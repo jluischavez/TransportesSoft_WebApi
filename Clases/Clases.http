@@ -1,0 +1,6 @@
+@TransportesSoft_WebApi_HostAddress = http://localhost:5177
+
+GET {{TransportesSoft_WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
