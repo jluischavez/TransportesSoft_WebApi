@@ -10,5 +10,6 @@ namespace TransportesSoft_WebApi.Models
         public string Direccion { get; set; }
         public string Telefono { get; set; }
         public string Estatus { get; set; }
+        public int? EmpresaId { get; set; }
     }
 }

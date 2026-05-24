@@ -48,9 +48,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
-app.UseAuthentication();
-app.UseAuthorization();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -58,15 +55,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
+app.UseCors("PermitirTodo");         // <- primero
 app.UseHttpsRedirection();
-
+app.UseAuthentication();             // <- después
 app.UseAuthorization();
-
 app.MapControllers();
 
-app.UseCors("PermitirTodo");
-
-app.Run();
-
-
+app.Run(); // <- faltaba esto

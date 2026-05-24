@@ -10,5 +10,6 @@ namespace TransportesSoft_WebApi.Models
         public required string ContrasenaHash { get; set; }
         public DateTime FechaRegistro { get; set; }
         public bool Activo { get; set; }
+        public int? EmpresaId { get; set; }
     }
 }

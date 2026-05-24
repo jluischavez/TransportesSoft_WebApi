@@ -2,7 +2,6 @@
 using TransportesSoft_WebApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace TransportesSoft_WebApi.Controllers
@@ -23,7 +22,17 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var clientes = await _context.ContClientesCat.ToListAsync();
+            var empresaIdClaim = User.FindFirst("EmpresaId")?.Value;
+
+            if (empresaIdClaim == null)
+                return Unauthorized(new { mensaje = "No tienes empresa asignada." });
+
+            var empresaId = int.Parse(empresaIdClaim);
+
+            var clientes = await _context.ContClientesCat
+                .Where(c => c.EmpresaId == empresaId)
+                .ToListAsync();
+
             return Ok(clientes);
         }
 

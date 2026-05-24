@@ -9,5 +9,6 @@ namespace TransportesSoft_WebApi.Data
         {}
         public DbSet<ContClientesCat> ContClientesCat { get; set; }
         public DbSet<UsuariosCat> UsuariosCat { get; set; }
+        public DbSet<EmpresasCat> EmpresasCat { get; set; }
     }
 }

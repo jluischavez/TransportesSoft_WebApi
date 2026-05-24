@@ -54,7 +54,8 @@ namespace TransportesSoft_WebApi.Controllers
             var claims = new[]
             {
             new Claim("Id", usuario.Id.ToString()),
-            new Claim("NombreUsuario", usuario.NombreUsuario)
+            new Claim("NombreUsuario", usuario.NombreUsuario),
+            new Claim("EmpresaId", usuario.EmpresaId?.ToString() ?? "")  // <- agrega esto
             };
 
             var key = new SymmetricSecurityKey(
@@ -73,12 +74,12 @@ namespace TransportesSoft_WebApi.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        //[HttpPost("generarhash")]
-        //public IActionResult GenerarHash([FromBody] string contrasena)
-        //{
-        //    var hash = BCrypt.Net.BCrypt.HashPassword(contrasena);
-        //    return Ok(hash);
-        //}
+        [HttpPost("generarhash")]
+        public IActionResult GenerarHash([FromBody] string contrasena)
+        {
+            var hash = BCrypt.Net.BCrypt.HashPassword(contrasena);
+            return Ok(hash);
+        }
 
         // POST /UsuariosCat/login
         [HttpPost("login")]
@@ -95,12 +96,22 @@ namespace TransportesSoft_WebApi.Controllers
             if (!contrasenaValida)
                 return Unauthorized("Usuario o contraseña incorrectos.");
 
+            EmpresasCat? empresa = null;
+            if (usuario.EmpresaId != null)
+            {
+                empresa = await _context.EmpresasCat.FindAsync(usuario.EmpresaId);
+            }
+
             return Ok(new
             {
                 mensaje = "Login exitoso",
                 usuario.Id,
                 usuario.NombreUsuario,
-                 token = GenerarToken(usuario)  // <- agrega esto
+                usuario.EmpresaId,
+                empresaNombre = empresa?.NombreComercial,
+                empresaRFC = empresa?.RFC,
+                empresaTelefono = empresa?.Telefono,
+                token = GenerarToken(usuario)  // <- agrega esto
             });
         }
     }
