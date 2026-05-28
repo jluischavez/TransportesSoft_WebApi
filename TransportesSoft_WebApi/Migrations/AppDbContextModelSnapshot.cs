@@ -51,7 +51,7 @@ namespace TransportesSoft_WebApi.Migrations
 
                     b.HasKey("id_Client");
 
-                    b.ToTable("ContClientesCat");
+                    b.ToTable("ContClientesCat", (string)null);
                 });
 
             modelBuilder.Entity("TransportesSoft_WebApi.Models.EmpresasCat", b =>
@@ -82,7 +82,7 @@ namespace TransportesSoft_WebApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EmpresasCat");
+                    b.ToTable("EmpresasCat", (string)null);
                 });
 
             modelBuilder.Entity("TransportesSoft_WebApi.Models.UsuariosCat", b =>
@@ -112,7 +112,7 @@ namespace TransportesSoft_WebApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UsuariosCat");
+                    b.ToTable("UsuariosCat", (string)null);
                 });
 #pragma warning restore 612, 618
         }
