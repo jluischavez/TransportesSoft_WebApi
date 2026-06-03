@@ -30,11 +30,11 @@ namespace TransportesSoft_WebApi.Controllers
             if (empresaId == 0)
                 return Unauthorized(new { mensaje = "No se encontró EmpresaId en el token." });
 
-            var clientes = await _context.ContClientesCat
+            var unidades = await _context.ContUnidadesCat
                 .Where(c => c.EmpresaId == empresaId)
                 .ToListAsync();
 
-            return Ok(clientes);
+            return Ok(unidades);
         }
 
         [HttpGet("{id}")]
