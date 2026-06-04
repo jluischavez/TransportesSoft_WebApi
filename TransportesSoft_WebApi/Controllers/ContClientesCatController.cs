@@ -8,9 +8,10 @@ namespace TransportesSoft_WebApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ContClientesCatController : Controller
+    public class ContClientesCatController : BaseApiController
     {
         private readonly AppDbContext _context;
+        
 
         public ContClientesCatController(AppDbContext context)
         {
@@ -22,15 +23,13 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var empresaIdClaim = User.FindFirst("EmpresaId")?.Value;
+            var empresaId = ObtenerEmpresaId();
 
-            if (empresaIdClaim == null)
-                return Unauthorized(new { mensaje = "No tienes empresa asignada." });
-
-            var empresaId = int.Parse(empresaIdClaim);
+            if (empresaId == null)
+                return SinEmpresaAsignada();
 
             var clientes = await _context.ContClientesCat
-                .Where(c => c.EmpresaId == empresaId)
+                .Where(c => c.EmpresaId == empresaId.Value)
                 .ToListAsync();
 
             return Ok(clientes);
@@ -41,8 +40,20 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var cliente = await _context.ContClientesCat.FindAsync(id);
-            if (cliente == null) return NotFound();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
+            var cliente = await _context.ContClientesCat
+                .FirstOrDefaultAsync(c =>
+                    c.id_Client == id &&
+                    c.EmpresaId == empresaId.Value
+                );
+
+            if (cliente == null)
+                return NotFound();
+
             return Ok(cliente);
         }
 
@@ -51,8 +62,16 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(ContClientesCat cliente)
         {
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
+            cliente.EmpresaId = empresaId.Value;
+
             _context.ContClientesCat.Add(cliente);
             await _context.SaveChangesAsync();
+
             return Ok(cliente);
         }
 
@@ -61,8 +80,19 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, ContClientesCat cliente)
         {
-            var existing = await _context.ContClientesCat.FindAsync(id);
-            if (existing == null) return NotFound();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
+            var existing = await _context.ContClientesCat
+                .FirstOrDefaultAsync(c =>
+                    c.id_Client == id &&
+                    c.EmpresaId == empresaId.Value
+                );
+
+            if (existing == null)
+                return NotFound();
 
             existing.Nombre = cliente.Nombre;
             existing.Direccion = cliente.Direccion;
@@ -70,6 +100,7 @@ namespace TransportesSoft_WebApi.Controllers
             existing.Estatus = cliente.Estatus;
 
             await _context.SaveChangesAsync();
+
             return Ok(existing);
         }
 
@@ -78,11 +109,23 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var cliente = await _context.ContClientesCat.FindAsync(id);
-            if (cliente == null) return NotFound();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
+            var cliente = await _context.ContClientesCat
+                .FirstOrDefaultAsync(c =>
+                    c.id_Client == id &&
+                    c.EmpresaId == empresaId.Value
+                );
+
+            if (cliente == null)
+                return NotFound();
 
             _context.ContClientesCat.Remove(cliente);
             await _context.SaveChangesAsync();
+
             return Ok();
         }
     }
