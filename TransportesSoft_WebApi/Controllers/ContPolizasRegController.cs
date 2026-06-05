@@ -9,7 +9,7 @@ namespace TransportesSoft_WebApi.Controllers
     [Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class ContPolizasRegController : ControllerBase
+    public class ContPolizasRegController : BaseApiController
     {
         private readonly AppDbContext _context;
         public ContPolizasRegController(AppDbContext context) => _context = context;

@@ -9,17 +9,19 @@ namespace TransportesSoft_WebApi.Controllers
     [Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class ContMantenimientosCabController : ControllerBase
+    public class ContMantenimientosCabController : BaseApiController
     {
         private readonly AppDbContext _context;
         public ContMantenimientosCabController(AppDbContext context) => _context = context;
 
-        private int GetEmpresaId() => int.Parse(User.FindFirst("EmpresaId")!.Value);
-
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var empresaId = GetEmpresaId();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
             var mantenimientos = await _context.ContMantenimientosCab
                 .Where(m => m.EmpresaId == empresaId)
                 .OrderByDescending(m => m.FechaMantenimiento)
@@ -30,7 +32,11 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var empresaId = GetEmpresaId();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
             var mantenimiento = await _context.ContMantenimientosCab
                 .FirstOrDefaultAsync(m => m.IdMantenimiento == id && m.EmpresaId == empresaId);
             if (mantenimiento == null) return NotFound();
@@ -40,7 +46,11 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpGet("{id}/detalle")]
         public async Task<IActionResult> GetDetalle(int id)
         {
-            var empresaId = GetEmpresaId();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
             var detalle = await _context.ContMantenimientosDet
                 .Where(d => d.IdMantenimiento == id && d.EmpresaId == empresaId)
                 .ToListAsync();
@@ -50,7 +60,11 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpGet("unidad/{idUnidad}")]
         public async Task<IActionResult> GetByUnidad(int idUnidad)
         {
-            var empresaId = GetEmpresaId();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
             var mantenimientos = await _context.ContMantenimientosCab
                 .Where(m => m.id_Unidad == idUnidad && m.EmpresaId == empresaId)
                 .OrderByDescending(m => m.FechaMantenimiento)
@@ -61,7 +75,11 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(ContMantenimientosCab mantenimiento)
         {
-            mantenimiento.EmpresaId = GetEmpresaId();
+            mantenimiento.EmpresaId = ObtenerEmpresaId();
+
+            if (mantenimiento.EmpresaId == null)
+                return SinEmpresaAsignada();
+
             _context.ContMantenimientosCab.Add(mantenimiento);
             await _context.SaveChangesAsync();
             return Ok(mantenimiento);
@@ -70,7 +88,11 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, ContMantenimientosCab mantenimiento)
         {
-            var empresaId = GetEmpresaId();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
             var existing = await _context.ContMantenimientosCab
                 .FirstOrDefaultAsync(m => m.IdMantenimiento == id && m.EmpresaId == empresaId);
             if (existing == null) return NotFound();
@@ -89,7 +111,11 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var empresaId = GetEmpresaId();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
             var mantenimiento = await _context.ContMantenimientosCab
                 .FirstOrDefaultAsync(m => m.IdMantenimiento == id && m.EmpresaId == empresaId);
             if (mantenimiento == null) return NotFound();

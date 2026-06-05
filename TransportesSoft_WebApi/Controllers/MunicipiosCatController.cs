@@ -8,7 +8,7 @@ namespace TransportesSoft_WebApi.Controllers
     [Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class MunicipiosCatController : ControllerBase
+    public class MunicipiosCatController : BaseApiController
     {
         private readonly AppDbContext _context;
         public MunicipiosCatController(AppDbContext context) => _context = context;

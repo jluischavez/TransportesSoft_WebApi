@@ -9,17 +9,19 @@ namespace TransportesSoft_WebApi.Controllers
     [Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class ContKilometrajeUnidadController : ControllerBase
+    public class ContKilometrajeUnidadController : BaseApiController
     {
         private readonly AppDbContext _context;
         public ContKilometrajeUnidadController(AppDbContext context) => _context = context;
 
-        private int GetEmpresaId() => int.Parse(User.FindFirst("EmpresaId")!.Value);
-
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var empresaId = GetEmpresaId();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
             var kilometrajes = await _context.ContKilometrajeUnidad
                 .Where(k => k.EmpresaId == empresaId)
                 .OrderByDescending(k => k.FechaRegistro)
@@ -30,7 +32,11 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpGet("unidad/{idUnidad}")]
         public async Task<IActionResult> GetByUnidad(int idUnidad)
         {
-            var empresaId = GetEmpresaId();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
             var kilometrajes = await _context.ContKilometrajeUnidad
                 .Where(k => k.id_Unidad == idUnidad && k.EmpresaId == empresaId)
                 .OrderByDescending(k => k.FechaRegistro)
@@ -41,7 +47,11 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(ContKilometrajeUnidad kilometraje)
         {
-            kilometraje.EmpresaId = GetEmpresaId();
+            kilometraje.EmpresaId = ObtenerEmpresaId();
+
+            if (kilometraje.EmpresaId == null)
+                return SinEmpresaAsignada();
+
             kilometraje.FechaRegistro = DateTime.Now;
             _context.ContKilometrajeUnidad.Add(kilometraje);
             await _context.SaveChangesAsync();
@@ -51,7 +61,11 @@ namespace TransportesSoft_WebApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var empresaId = GetEmpresaId();
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
             var kilometraje = await _context.ContKilometrajeUnidad
                 .FirstOrDefaultAsync(k => k.Id == id && k.EmpresaId == empresaId);
             if (kilometraje == null) return NotFound();

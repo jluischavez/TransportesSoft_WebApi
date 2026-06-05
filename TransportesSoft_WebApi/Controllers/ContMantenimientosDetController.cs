@@ -9,7 +9,7 @@ namespace TransportesSoft_WebApi.Controllers
     [Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class ContMantenimientosDetController : ControllerBase
+    public class ContMantenimientosDetController : BaseApiController
     {
         private readonly AppDbContext _context;
         public ContMantenimientosDetController(AppDbContext context) => _context = context;

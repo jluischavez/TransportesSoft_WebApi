@@ -9,7 +9,7 @@ namespace TransportesSoft_WebApi.Controllers
     [Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class ContPreciosDieselController : ControllerBase
+    public class ContPreciosDieselController : BaseApiController
     {
         private readonly AppDbContext _context;
         public ContPreciosDieselController(AppDbContext context) => _context = context;

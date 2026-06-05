@@ -13,7 +13,7 @@ namespace TransportesSoft_WebApi.Controllers
 
     [ApiController]
     [Route("[controller]")]
-    public class UsuariosCatController : ControllerBase
+    public class UsuariosCatController : BaseApiController
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
