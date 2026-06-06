@@ -54,8 +54,9 @@ namespace TransportesSoft_WebApi.Controllers
             var claims = new[]
             {
             new Claim("Id", usuario.Id.ToString()),
+            new Claim("UsuarioId", usuario.Id.ToString()),
             new Claim("NombreUsuario", usuario.NombreUsuario),
-            new Claim("EmpresaId", usuario.EmpresaId?.ToString() ?? "")  // <- agrega esto
+            new Claim("EmpresaId", usuario.EmpresaId?.ToString() ?? "")
             };
 
             var key = new SymmetricSecurityKey(
