@@ -16,64 +16,108 @@ namespace TransportesSoft_WebApi.Controllers
 
         private int GetEmpresaId() => int.Parse(User.FindFirst("EmpresaId")!.Value);
 
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var empresaId = GetEmpresaId();
-            var precios = await _context.ContPreciosDiesel
-                .Where(p => p.EmpresaId == empresaId)
-                .OrderByDescending(p => p.FechaRegistro)
-                .ToListAsync();
-            return Ok(precios);
+            try
+            {
+                var empresaId = GetEmpresaId();
+                var precios = await _context.ContPreciosDiesel
+                    .Where(p => p.EmpresaId == empresaId)
+                    .OrderByDescending(p => p.FechaRegistro)
+                    .ToListAsync();
+                return Ok(precios);
+            }
+            catch
+            {
+                return StatusCode(500, new { mensaje = "Error al obtener los precios." });
+            }
+            
         }
 
-        [HttpGet("vigente")]
-        public async Task<IActionResult> GetVigente()
-        {
-            var empresaId = GetEmpresaId();
-            var hoy = DateTime.Today;
-            var precio = await _context.ContPreciosDiesel
-                .Where(p => p.EmpresaId == empresaId && p.FechaRegistro <= hoy && p.FechaExpiro >= hoy)
-                .FirstOrDefaultAsync();
-            if (precio == null) return NotFound(new { mensaje = "No hay precio vigente." });
-            return Ok(precio);
-        }
-
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create(ContPreciosDiesel precio)
         {
-            precio.EmpresaId = GetEmpresaId();
-            _context.ContPreciosDiesel.Add(precio);
-            await _context.SaveChangesAsync();
-            return Ok(precio);
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                precio.EmpresaId = ObtenerEmpresaId();
+                if (precio.EmpresaId == null)
+                    return SinEmpresaAsignada();
+
+                // expirar el precio anterior
+                var precioAnterior = await _context.ContPreciosDiesel
+                    .Where(p => p.EmpresaId == precio.EmpresaId)
+                    .OrderByDescending(p => p.FechaRegistro)
+                    .ThenByDescending(p => p.IdDiesel)
+                    .FirstOrDefaultAsync();
+
+                if (precioAnterior != null)
+                    precioAnterior.FechaExpiro = DateTime.Today;
+
+                precio.FechaRegistro = DateTime.Today;
+                _context.ContPreciosDiesel.Add(precio);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return Ok(precio);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, new { mensaje = "Error al guardar." });
+            }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, ContPreciosDiesel precio)
+        [Authorize]
+        [HttpGet("Precio-Actual")]
+        public async Task<IActionResult> GetPrecioActual()
         {
-            var empresaId = GetEmpresaId();
-            var existing = await _context.ContPreciosDiesel
-                .FirstOrDefaultAsync(p => p.IdDiesel == id && p.EmpresaId == empresaId);
-            if (existing == null) return NotFound();
+            try
+            {
+                /*PRECIO VIGENTE*/
+                var empresaId = ObtenerEmpresaId();
 
-            existing.Precio = precio.Precio;
-            existing.FechaRegistro = precio.FechaRegistro;
-            existing.FechaExpiro = precio.FechaExpiro;
+                if (empresaId == null)
+                    return SinEmpresaAsignada();
 
-            await _context.SaveChangesAsync();
-            return Ok(existing);
+                var precioActual = await _context.ContPreciosDiesel
+                    .Where(p => p.EmpresaId == empresaId)
+                    .OrderByDescending(p => p.FechaRegistro)
+                    .ThenByDescending(p => p.IdDiesel)
+                    .FirstOrDefaultAsync();
+
+                if (precioActual == null)
+                    return NotFound(new { mensaje = "No se encontró un precio registrado para esta empresa." });
+                return Ok(precioActual);
+            }
+            catch
+            {
+                return StatusCode(500, new { mensaje = "Error al obtener el precio actual." });
+            }
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var empresaId = GetEmpresaId();
-            var precio = await _context.ContPreciosDiesel
-                .FirstOrDefaultAsync(p => p.IdDiesel == id && p.EmpresaId == empresaId);
-            if (precio == null) return NotFound();
-            _context.ContPreciosDiesel.Remove(precio);
-            await _context.SaveChangesAsync();
-            return Ok();
+            try
+            {
+                var empresaId = GetEmpresaId();
+                var precio = await _context.ContPreciosDiesel
+                    .FirstOrDefaultAsync(p => p.IdDiesel == id && p.EmpresaId == empresaId);
+                if (precio == null) return NotFound();
+                _context.ContPreciosDiesel.Remove(precio);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch
+            {
+                return StatusCode(500, new { mensaje = "Error al eliminar el precio." });
+            }
+            
         }
     }
 }

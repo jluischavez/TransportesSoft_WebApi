@@ -19,25 +19,6 @@ namespace TransportesSoft_WebApi.Controllers
             _context = context;
         }
 
-        private async Task AsignarRolUnicoAsync(int usuarioId, int rolId)
-        {
-            var usuarioRol = await _context.UsuarioRoles
-                .FirstOrDefaultAsync(x => x.UsuarioId == usuarioId);
-
-            if (usuarioRol == null)
-            {
-                _context.UsuarioRoles.Add(new UsuarioRoles
-                {
-                    UsuarioId = usuarioId,
-                    RolId = rolId
-                });
-            }
-            else
-            {
-                usuarioRol.RolId = rolId;
-            }
-        }
-
         // GET /EmpresasCat - trae solo Id y NombreComercial para el select
         [HttpGet]
         public async Task<IActionResult> GetAll()

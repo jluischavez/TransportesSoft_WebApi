@@ -38,8 +38,7 @@ namespace TransportesSoft_WebApi.Data
                 .HasKey(d => new { d.IdMantenimiento, d.Renglon });
 
             // ContConsumoUnidades no tiene PK definida en la BD
-            modelBuilder.Entity<ContConsumoUnidades>()
-                .HasNoKey();
+            modelBuilder.Entity<ContConsumoUnidades>();
         }
     }
 }

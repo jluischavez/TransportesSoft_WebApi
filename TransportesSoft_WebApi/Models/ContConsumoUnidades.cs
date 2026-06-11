@@ -5,6 +5,8 @@ namespace TransportesSoft_WebApi.Models
 {
     public class ContConsumoUnidades
     {
+        [Key]
+        public int Id { get; set; }
         public int id_Unidad { get; set; }
         public DateTime Fecha { get; set; }
         public int ConsumoLitros { get; set; }
