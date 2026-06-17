@@ -240,7 +240,7 @@ namespace TransportesSoft_WebApi.Controllers
 
         [Authorize]
         [HttpGet("reporte")]
-        public async Task<IActionResult> Reporte(DateTime fechaInicio, DateTime fechaFin, string tipoFecha = "FechaViaje")
+        public async Task<IActionResult> Reporte(DateTime fechaInicio, DateTime fechaFin, string tipoFecha = "FechaViaje", int? idUnidad = null)
         {
             try
             {
@@ -261,6 +261,11 @@ namespace TransportesSoft_WebApi.Controllers
                 else
                 {
                     query = query.Where(v => v.FechaViaje >= fechaInicio && v.FechaViaje <= fechaFin);
+                }
+
+                if (idUnidad.HasValue)
+                {
+                    query = query.Where(v => v.id_Unidad == idUnidad.Value);
                 }
 
                 var viajes = await query
