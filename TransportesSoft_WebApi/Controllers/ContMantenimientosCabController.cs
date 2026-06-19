@@ -57,6 +57,115 @@ namespace TransportesSoft_WebApi.Controllers
             return Ok(detalle);
         }
 
+        [Authorize]
+        [HttpGet("reporte")]
+        public async Task<IActionResult> Reporte(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        string? tipoEquipo = null,
+        int? idEquipo = null)
+        {
+            try
+            {
+                var empresaId = ObtenerEmpresaId();
+
+                if (empresaId == null)
+                    return SinEmpresaAsignada();
+
+                fechaInicio = fechaInicio.Date;
+                fechaFin = fechaFin.Date.AddDays(1).AddTicks(-1);
+
+                var queryCab = _context.ContMantenimientosCab
+                    .Where(c => c.EmpresaId == empresaId.Value)
+                    .Where(c =>
+                        c.FechaMantenimiento >= fechaInicio &&
+                        c.FechaMantenimiento <= fechaFin);
+
+                if (!string.IsNullOrWhiteSpace(tipoEquipo) && idEquipo.HasValue)
+                {
+                    tipoEquipo = tipoEquipo.Trim().ToLower();
+
+                    if (tipoEquipo == "unidad")
+                    {
+                        queryCab = queryCab.Where(c => c.id_Unidad == idEquipo.Value);
+                    }
+                    else if (tipoEquipo == "remolque")
+                    {
+                        queryCab = queryCab.Where(c => c.id_Remolque == idEquipo.Value);
+                    }
+                    else
+                    {
+                        return BadRequest(new
+                        {
+                            mensaje = "Tipo de equipo inválido. Usa 'unidad' o 'remolque'."
+                        });
+                    }
+                }
+
+                var cabeceras = await queryCab
+                    .OrderBy(c => c.FechaMantenimiento)
+                    .ThenBy(c => c.IdMantenimiento)
+                    .Select(c => new
+                    {
+                        c.IdMantenimiento,
+                        c.FechaMantenimiento,
+                        c.Kilometraje,
+                        c.Proveedor,
+                        c.CostoTotal,
+                        c.id_Unidad,
+                        c.id_Remolque,
+
+                        unidad = _context.ContUnidadesCat
+                            .Where(u =>
+                                u.id_Unidad == c.id_Unidad &&
+                                u.EmpresaId == empresaId.Value)
+                            .Select(u => u.id_Unidad + " — " + u.Marca + " | " + u.Serie)
+                            .FirstOrDefault() ?? c.id_Unidad.ToString(),
+
+                        remolque = _context.ContRemolquesCat
+                        .Where(r =>
+                            r.id_Remolque == c.id_Remolque &&
+                            r.EmpresaId == empresaId.Value)
+                        .Select(r => r.id_Remolque + " — " + r.Marca + " | " + r.Modelo)
+                        .FirstOrDefault() ?? c.id_Remolque.ToString()
+                    })
+                    .ToListAsync();
+
+                var idsMantenimiento = cabeceras
+                    .Select(c => c.IdMantenimiento)
+                    .ToList();
+
+                var detalles = await _context.ContMantenimientosDet
+                    .Where(d => d.EmpresaId == empresaId.Value)
+                    .Where(d => idsMantenimiento.Contains(d.IdMantenimiento))
+                    .OrderBy(d => d.IdMantenimiento)
+                    .ThenBy(d => d.Renglon)
+                    .Select(d => new
+                    {
+                        d.IdMantenimiento,
+                        d.Renglon,
+                        d.Refaccion,
+                        d.Proveedor,
+                        d.PrecioRefaccion,
+                        d.Comentarios
+                    })
+                    .ToListAsync();
+
+                return Ok(new
+                {
+                    cabeceras,
+                    detalles
+                });
+            }
+            catch
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al generar el reporte de mantenimientos."
+                });
+            }
+        }
+
         [HttpGet("unidad/{idUnidad}")]
         public async Task<IActionResult> GetByUnidad(int idUnidad)
         {
