@@ -181,6 +181,108 @@ namespace TransportesSoft_WebApi.Controllers
             return Ok(mantenimientos);
         }
 
+        [Authorize]
+        [HttpGet("estado-mantenimiento-unidades")]
+        public async Task<IActionResult> EstadoMantenimientoUnidades()
+        {
+            var empresaId = ObtenerEmpresaId();
+
+            if (empresaId == null)
+                return SinEmpresaAsignada();
+
+            const int kmMantenimiento = 15000;
+            const int kmAlerta = 3000;
+
+            var unidades = await _context.ContUnidadesCat
+                .Where(u => u.EmpresaId == empresaId.Value)
+                .Select(u => new
+                {
+                    u.id_Unidad,
+                    u.Marca,
+                    u.Serie
+                })
+                .ToListAsync();
+
+            var resultado = new List<object>();
+
+            foreach (var unidad in unidades)
+            {
+                var ultimoMantenimiento = await _context.ContMantenimientosCab
+                    .Where(m =>
+                        m.EmpresaId == empresaId.Value &&
+                        m.id_Unidad == unidad.id_Unidad)
+                    .OrderByDescending(m => m.FechaMantenimiento)
+                    .ThenByDescending(m => m.IdMantenimiento)
+                    .FirstOrDefaultAsync();
+
+                var ultimoKilometraje = await _context.ContKilometrajeUnidad
+                    .Where(k =>
+                        k.EmpresaId == empresaId.Value &&
+                        k.id_Unidad == unidad.id_Unidad)
+                    .OrderByDescending(k => k.FechaRegistro)
+                    .ThenByDescending(k => k.Id)
+                    .FirstOrDefaultAsync();
+
+                string estado;
+                string color;
+                int? kmRecorridos = null;
+                int? kmRestantes = null;
+
+                if (ultimoMantenimiento == null)
+                {
+                    estado = "Sin mantenimiento registrado";
+                    color = "rojo";
+                }
+                else if (ultimoKilometraje == null)
+                {
+                    estado = "Sin kilometraje registrado";
+                    color = "gris";
+                }
+                else
+                {
+                    kmRecorridos = ultimoKilometraje.KilometrajeActual - ultimoMantenimiento.Kilometraje;
+                    kmRestantes = kmMantenimiento - kmRecorridos.Value;
+
+                    if (kmRecorridos >= kmMantenimiento)
+                    {
+                        estado = "Mantenimiento vencido";
+                        color = "rojo";
+                    }
+                    else if (kmRestantes <= kmAlerta)
+                    {
+                        estado = "Próximo a mantenimiento";
+                        color = "amarillo";
+                    }
+                    else
+                    {
+                        estado = "Correcto";
+                        color = "verde";
+                    }
+                }
+
+                resultado.Add(new
+                {
+                    unidad.id_Unidad,
+                    unidad.Marca,
+                    unidad.Serie,
+
+                    ultimoMantenimientoKm = ultimoMantenimiento?.Kilometraje,
+                    ultimoMantenimientoFecha = ultimoMantenimiento?.FechaMantenimiento,
+
+                    kilometrajeActual = ultimoKilometraje?.KilometrajeActual,
+                    fechaKilometrajeActual = ultimoKilometraje?.FechaRegistro,
+
+                    kmRecorridos,
+                    kmRestantes,
+
+                    estado,
+                    color
+                });
+            }
+
+            return Ok(resultado);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create(ContMantenimientosCab mantenimiento)
         {
