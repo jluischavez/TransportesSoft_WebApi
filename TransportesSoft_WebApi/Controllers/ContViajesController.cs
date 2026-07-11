@@ -117,9 +117,9 @@ namespace TransportesSoft_WebApi.Controllers
                 await _context.SaveChangesAsync();
                 return Ok(viaje);
             }
-            catch
+            catch(Exception ex)
             {
-                return StatusCode(500, new { mensaje = "Error al crear el viaje." });
+                return StatusCode(500, new { mensaje = "Error al crear el viaje.", detalle = ex.Message, inner = ex.InnerException?.Message });
             }
             
         }
