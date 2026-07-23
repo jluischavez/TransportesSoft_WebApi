@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TransportesSoft_WebApi.DTOs.Rentabilidad;
 using TransportesSoft_WebApi.Services.Interfaces;
 
 namespace TransportesSoft_WebApi.Controllers;
@@ -7,24 +8,23 @@ namespace TransportesSoft_WebApi.Controllers;
 [Authorize]
 [ApiController]
 [Route("[controller]")]
-public sealed class DashboardController : BaseApiController
+public sealed class ReportesController : BaseApiController
 {
     private readonly IRentabilidadService _rentabilidadService;
-    private readonly ILogger<DashboardController> _logger;
+    private readonly ILogger<ReportesController> _logger;
 
-    public DashboardController(
+    public ReportesController(
         IRentabilidadService rentabilidadService,
-        ILogger<DashboardController> logger)
+        ILogger<ReportesController> logger)
     {
         _rentabilidadService = rentabilidadService;
         _logger = logger;
     }
 
-    [HttpGet("resumen-mensual")]
-    public async Task<IActionResult> ObtenerResumenMensual(
-        int? anio = null,
-        int? mes = null,
-        CancellationToken cancellationToken = default)
+    [HttpGet("rentabilidad-operativa")]
+    public async Task<IActionResult> ObtenerRentabilidadOperativa(
+        [FromQuery] ReporteRentabilidadFiltroDto filtro,
+        CancellationToken cancellationToken)
     {
         var empresaId = ObtenerEmpresaId();
 
@@ -35,13 +35,12 @@ public sealed class DashboardController : BaseApiController
 
         try
         {
-            var resumen = await _rentabilidadService.ObtenerDashboardMensualAsync(
+            var reporte = await _rentabilidadService.ObtenerReporteAsync(
                 empresaId.Value,
-                anio,
-                mes,
+                filtro,
                 cancellationToken);
 
-            return Ok(resumen);
+            return Ok(reporte);
         }
         catch (ArgumentException ex)
         {
@@ -51,12 +50,12 @@ public sealed class DashboardController : BaseApiController
         {
             _logger.LogError(
                 ex,
-                "Error al consultar el dashboard para la empresa {EmpresaId}",
+                "Error al generar el reporte de rentabilidad para la empresa {EmpresaId}",
                 empresaId.Value);
 
             return StatusCode(500, new
             {
-                mensaje = "No se pudo obtener el resumen del dashboard."
+                mensaje = "No se pudo generar el reporte de rentabilidad."
             });
         }
     }

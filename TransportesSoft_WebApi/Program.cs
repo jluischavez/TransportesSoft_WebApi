@@ -3,6 +3,11 @@ using TransportesSoft_WebApi.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using TransportesSoft_WebApi.Repositories;
+using TransportesSoft_WebApi.Repositories.Interfaces;
+using TransportesSoft_WebApi.Services;
+using TransportesSoft_WebApi.Services.Interfaces;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +84,9 @@ builder.Services
             ClockSkew = TimeSpan.Zero
         };
     });
+
+builder.Services.AddScoped<IRentabilidadRepository, RentabilidadRepository>();
+builder.Services.AddScoped<IRentabilidadService, RentabilidadService>();
 
 var app = builder.Build();
 
